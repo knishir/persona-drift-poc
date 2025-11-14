@@ -1,0 +1,12 @@
+{
+  "user_id": "alice",
+  "kind": "login",
+  "meta": {
+    "ip": "55.66.77.88",
+    "device": {
+      "os": "linux",
+      "browser": "firefox",
+      "dev_type": "desktop"
+    }
+  }
+}

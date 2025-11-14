@@ -1,0 +1,69 @@
+{
+  "alice": [
+    {
+      "user_id": "alice",
+      "kind": "login",
+      "meta": {
+        "device": {
+          "browser": "firefox",
+          "dev_type": "desktop",
+          "os": "linux"
+        },
+        "ip": "55.66.77.88"
+      },
+      "ts": "2025-11-14T18:23:14.415134500+00:00"
+    },
+    {
+      "user_id": "alice",
+      "kind": "login",
+      "meta": {
+        "device": {
+          "browser": "firefox",
+          "dev_type": "desktop",
+          "os": "linux"
+        },
+        "ip": "55.66.77.88"
+      },
+      "ts": "2025-11-14T18:24:46.874458600+00:00"
+    },
+    {
+      "user_id": "alice",
+      "kind": "login",
+      "meta": {
+        "device": {
+          "browser": "firefox",
+          "dev_type": "desktop",
+          "os": "linux"
+        },
+        "ip": "55.66.77.88"
+      },
+      "ts": "2025-11-14T18:27:59.864029700+00:00"
+    },
+    {
+      "user_id": "alice",
+      "kind": "login",
+      "meta": {
+        "device": {
+          "browser": "firefox",
+          "dev_type": "desktop",
+          "os": "linux"
+        },
+        "ip": "55.66.77.88"
+      },
+      "ts": "2025-11-14T18:31:24.417200500+00:00"
+    },
+    {
+      "user_id": "alice",
+      "kind": "login",
+      "meta": {
+        "device": {
+          "browser": "firefox",
+          "dev_type": "desktop",
+          "os": "linux"
+        },
+        "ip": "55.66.77.88"
+      },
+      "ts": "2025-11-14T18:48:14.813262900+00:00"
+    }
+  ]
+}
