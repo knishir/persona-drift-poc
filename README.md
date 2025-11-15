@@ -1,251 +1,285 @@
-# Persona Drift POC  
-### Rust Engine + Next.js Dashboard  
-A complete end-to-end system for detecting persona drift using a Rust backend (Axum) and a Next.js 14 dashboard.
+# 🚀 Persona Drift — Full System Overview  
+### *(Rust Backend + Next.js Frontend)*
+
+This document provides a **complete technical overview** of the entire project, including:
+- The Rust Behavioral Engine  
+- The Next.js Analytics Dashboard  
+- What the system does  
+- How it works internally  
+- What features it currently provides  
+- Future goals  
+- How anyone can use or extend it  
 
 ---
 
-## 🚀 Project Summary
+# 📌 1. What This Entire System Does
 
-This project is a **full working POC** that:
+This project is a **lightweight behavioral intelligence platform** combining Rust + Next.js.
 
-- Collects login/device/browser events  
-- Stores them persistently  
-- Computes drift indicators  
-- Generates fingerprint & stability scoring  
-- Displays everything in a beautiful UI dashboard  
+It provides:
 
-The system helps security teams detect unusual shifts in user behaviour.
+### ✔ Behavioral Drift Detection  
+Detects sudden changes in:
+- IP  
+- Browser  
+- OS  
+- Device type  
 
----
-
-# 🏗 Architecture
-
-persona-drift-poc/
-│
-├── rust-engine/ → Rust Axum backend server
-│ ├── src/main.rs
-│ ├── store.json
-│ └── Cargo.toml
-│
-└── drift-dashboard/ → Next.js frontend dashboard
-├── app/
-├── lib/api.ts
-└── package.json
+Output: **drift score + drift reasons**
 
 ---
 
-# ⚙️ Rust Backend (Axum)
+### ✔ Device Fingerprinting  
+Creates stable fingerprints using:
+- OS  
+- Browser  
+- Device  
+- IP  
 
-### ✔ Event Model
+Output: **current fingerprint + stability score**
 
-```json
-{
-  "user_id": "alice",
-  "kind": "login",
-  "meta": {
-    "browser": "chrome",
-    "os": "windows",
-    "ip": "12.34.56.78",
-    "device": "laptop"
-  }
-}
-Stored with timestamp and kept in store.json.
+---
 
-🧵 Endpoints
-POST /ingest
-Stores event, timestamps it, persists to disk.
+### ✔ Timeline Reconstruction  
+Builds a **chronological timeline** of events for every user.
 
-GET /drift/:user_id
-Computes persona drift using changes across:
+---
 
-IP class
+### ✔ Frontend Security Dashboard  
+Provides analysts with:
+- User list  
+- Event count  
+- Drift score  
+- Fingerprint stability  
+- Full behavior timeline  
 
-Browser
+---
 
-OS
+# 🧠 2. How the System Works (High Level Flow)
 
-Device type
++----------------------------+
+| Next.js Dashboard |
+| (User analytics frontend) |
++-------------+--------------+
+|
+| Axios API Calls
+▼
++----------------------------+
+| Rust Behavior Engine |
+| - Event ingestion |
+| - Fingerprint creation |
+| - Drift detection |
+| - Timeline reconstruction |
++-------------+--------------+
+|
+| JSON read/write
+▼
++----------------------------+
+| store.json |
++----------------------------+
 
-Response example:
-
-json
+yaml
 Copy code
-{
-  "events": 10,
-  "drift_score": 40,
-  "reasons": ["Multiple IPs", "Multiple Browsers"]
-}
-GET /fingerprint/:user_id
-Returns:
 
-Stable fingerprint (blake3 hash)
+The **backend processes behavior**, while the **frontend visualizes it**.
 
-Stability score
+---
 
-Latest event tokens
+# ⚙️ 3. Rust Backend (Behavior Engine)
 
-GET /timeline/:user_id
-Returns all user events sorted by time.
+The Rust engine is responsible for:
 
-GET /profiles
-Returns count of events per user.
+### ✔ Event Ingestion (`POST /ingest`)
+Accepts JSON events containing:
+- user_id  
+- kind (login, action, etc.)  
+- metadata  
+- timestamp  
 
-GET /health
-Simple server check.
+Automatically adds timestamp if missing.
 
-🔐 Persistence
-The backend loads data from:
+---
 
-pgsql
-Copy code
+### ✔ Persistence  
+Everything is saved into:
+
 store.json
-And saves automatically after every ingestion.
 
-🔄 CORS
-Configured using:
-
-rust
+yaml
 Copy code
-let cors = CorsLayer::permissive();
-Compatible with Axum 0.7 + tower-http 0.5.
 
-🎨 Next.js 14 Dashboard
-The dashboard shows:
+Rust loads it on startup and writes back after every change.
 
-✔ User drift analysis
-✔ Fingerprint stability
-✔ Timeline of events
-✔ Total events count
-✔ Latest device/browser/ip/os
-Everything comes from:
+---
 
-bash
-Copy code
-/drift/:userId
-/fingerprint/:userId
-/timeline/:userId
-/profiles
-📍 Important Frontend Files
-lib/api.ts
-Axios instance for backend communication.
+### ✔ Drift Detection (`GET /drift/:id`)
+Evaluates:
+- Multiple different IPs  
+- Changing OS  
+- Browser switching  
+- Changing device types  
 
-app/user/[userId]/UserDetailClient.tsx
-Main UI for visualizing:
+Returns:
+- drift score (0–100)  
+- drift reasons (string list)  
+- raw event metadata  
 
-Drift score
+---
 
-Fingerprint
+### ✔ Fingerprint Stability (`GET /fingerprint/:id`)
+Tracks stability of:
+- IP  
+- OS  
+- Browser  
+- Device type  
 
-Timeline
+Returns:
+- fingerprint hash  
+- stability score  
+- stability history  
+- tokenized metadata  
 
-Stats
+---
 
-🧪 Testing Instructions
-1. Start backend
-arduino
-Copy code
+### ✔ Timeline (`GET /timeline/:id`)
+Sorts events by timestamp.
+
+---
+
+### ✔ Profiles (`GET /profiles`)
+Returns:
+- all user IDs  
+- count of events per user  
+
+---
+
+### ⭐ Technologies Used (Rust)
+
+- **Axum 0.7** — web server  
+- **Tokio** — async runtime  
+- **Serde** — JSON parsing  
+- **tower-http** — CORS  
+- **RwLock + HashMap** — state store  
+- **JSON file persistence**  
+
+---
+
+# 🌐 4. Next.js Frontend (User Dashboard)
+
+The frontend handles:
+
+### ✔ User List Page  
+Fetches `/profiles` and displays:
+- user ID  
+- events count  
+- link to detailed analytics  
+
+---
+
+### ✔ Detailed User Page (`/user/[id]`)
+Fetches:
+- `/drift/:id`
+- `/fingerprint/:id`
+- `/timeline/:id`
+
+Displays:
+- **drift score**  
+- **drift reasons**  
+- **stability score**  
+- **fingerprint tokens**  
+- **timeline in order**  
+
+---
+
+### ✔ Technology Used (Frontend)
+
+- **Next.js 14 (App Router)**  
+- **React Client Components**  
+- **Axios for API**  
+- **Dynamic routing**  
+- **Tailwind-ready structure**  
+- Clean security dashboard layout  
+
+---
+
+# 🔍 5. What This Proves / Demonstrates
+
+This project proves that:
+
+### ✔ Behavioral identity can be tracked without cookies  
+### ✔ A user fingerprint can be built from metadata  
+### ✔ Drift can be measured by comparing events  
+### ✔ Behavior timelines help analysts identify anomalies  
+### ✔ Rust is extremely fast at log ingestion & analysis  
+### ✔ Next.js can provide a SOC-grade UI with minimal effort  
+
+This forms the **core of a real behavioral security engine**.
+
+---
+
+# 🎯 6. Future Goals
+
+These can be added later:
+
+### Backend
+- GeoIP scoring  
+- ML anomaly detection  
+- Real-time alerts  
+- Redis/Postgres persistence  
+- Risk scoring engine  
+
+### Frontend
+- Timeline chart UI  
+- Drift trend graph  
+- Fingerprint comparison UI  
+- Admin roles & login  
+
+---
+
+# 📦 7. How Anyone Can Use This
+
+### 🔧 Start Backend
 cd rust-engine
 cargo run
-2. Send sample event
-nginx
+
+shell
 Copy code
-curl -X POST http://localhost:8080/ingest ^
--H "Content-Type: application/json" ^
--d "@event.json"
-3. Start frontend
-arduino
-Copy code
+
+### 🖥 Start Frontend
 cd drift-dashboard
 npm install
 npm run dev
+
+makefile
+Copy code
+
 Visit:
 
-👉 http://localhost:3000/user/alice
+http://localhost:3000
 
-🌱 Future Goals
-Move from JSON → PostgreSQL / SQLite
+yaml
+Copy code
 
-Add advanced anomaly scoring
+---
 
-Add charts & visualizations
+# 🏁 8. Final Summary
 
-Add WebSocket real-time monitoring
+This repository includes:
 
-Add role-based admin panel
+### ✔ Rust backend  
+- Drift detection  
+- Fingerprinting  
+- Timeline generation  
+- JSON persistence  
+- Clean REST API  
 
-Deploy Rust backend on Fly.io
+### ✔ Next.js frontend  
+- SOC-style dashboard  
+- User analytics  
+- Timeline visualization  
 
-Deploy Next.js dashboard on Vercel
+This project acts as the **foundation for identity analytics, fraud detection, or a custom SIEM module**.
 
-Add mobile-friendly dashboard
+---
 
-Add heatmap of risk factors
-
-🛠 Technology Stack
-Backend (Rust)
-Axum 0.7
-
-Tokio
-
-tower-http
-
-Blake3
-
-serde / serde_json
-
-Frontend (Next.js)
-Next.js 14 App Router
-
-React Server Components + Client Components
-
-Axios
-
-TailwindCSS (optional)
-
-🎯 What This Project Can Be Used For
-Detecting account sharing
-
-Fraud detection
-
-Device fingerprinting
-
-Security anomaly detection
-
-Login pattern monitoring
-
-Behavioural identity verification
-
-Enterprise SIEM enrichment
-
-📦 How Others Can Use This Repo
-Clone the repo
-
-Run the Rust engine
-
-Run the Next.js dashboard
-
-POST events
-
-Immediately see user behaviour patterns visualized
-
-Great as a base for:
-
-SOC tools
-
-SIEM systems
-
-User monitoring solutions
-
-Identity analytics
-
-Research & security labs
-
-🧭 Maintainer Notes
-The project persists data locally for simplicity
-
-Any backend restart will reload existing history
-
-Frontend expects Rust engine running on localhost:8080
-
-✅ End of Document
-This .md includes everything needed for contributors, future upgrades, and developers exploring the project.
+# 🎉 End of Overview
