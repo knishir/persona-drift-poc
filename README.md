@@ -78,8 +78,6 @@ Provides analysts with:
 | store.json |
 +----------------------------+
 
-yaml
-Copy code
 
 The **backend processes behavior**, while the **frontend visualizes it**.
 
@@ -105,8 +103,6 @@ Everything is saved into:
 
 store.json
 
-yaml
-Copy code
 
 Rust loads it on startup and writes back after every change.
 
@@ -242,8 +238,7 @@ These can be added later:
 cd rust-engine
 cargo run
 
-shell
-Copy code
+
 
 ### 🖥 Start Frontend
 cd drift-dashboard
@@ -257,8 +252,7 @@ Visit:
 
 http://localhost:3000
 
-yaml
-Copy code
+
 
 ---
 
