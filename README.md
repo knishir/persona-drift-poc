@@ -32,9 +32,6 @@ persona-drift-poc/
 ├── lib/api.ts
 └── package.json
 
-yaml
-Copy code
-
 ---
 
 # ⚙️ Rust Backend (Axum)
