@@ -1,158 +1,193 @@
-1. RUST_BACKEND.md
-(full file inside one code block — COPY AS IS)
-# Persona Drift Detector – Rust Backend (Axum)
+# ⚙️ Persona Drift Engine (Rust) — Full Documentation
 
-This backend is the core engine of the Persona Drift Detector system. It receives user behavioral events, stores them, analyzes drift, calculates identity fingerprints, and serves the dashboard API. The backend is written in Rust using Axum, Tokio, and Tower-HTTP.
+The **Persona Drift Engine** is a Rust-based behavioral analytics engine that detects unusual user behavior, device fingerprints, and drift over time. It exposes a clean HTTP API that powers the Next.js dashboard.
 
 ---
 
-## 🧠 What This Backend Does
+# 📌 1. What This Engine Does
 
-### 1. Event Ingestion  
-The `/ingest` endpoint accepts user events such as:
-- login actions  
-- device info  
-- browser info  
-- OS  
-- IP address  
-- timestamps  
+The engine performs **four major tasks**:
 
-These events are saved in memory and persisted to `store.json`.
+### ✔ 1. Ingests behavioral events  
+Each event contains:
+- `user_id`
+- `kind` (login, action, etc.)
+- `meta` (browser, OS, device, IP)
+- `timestamp`
 
-### 2. Profile Summary  
-The `/profiles` endpoint returns a map of all users and their total event count.
+### ✔ 2. Stores events in-memory and persists to disk (`store.json`)  
+Data survives restarts.
 
-### 3. Drift Analysis (Future Expansion)  
-Although disabled temporarily, the backend is intended to:
-- detect identity drift  
-- score behavior anomalies  
-- highlight risk  
-- compare event patterns across time  
+### ✔ 3. Computes analytics  
+These include:
+- Drift score  
+- Drift reasons  
+- Fingerprint similarity  
+- Stability scores  
+- Timeline reconstruction  
 
-### 4. Behavioral Fingerprinting (Future Expansion)  
-The backend is structured to support:
-- consistent fingerprint generation  
-- stability scoring  
-- tracking of changes to a user's behavior fingerprint  
-
-### 5. Timeline API (Future Expansion)  
-Intended to show:
-- chronological event patterns  
-- device switching  
-- IP movement  
-- browser switching  
-- OS switching  
+### ✔ 4. Exposes a simple REST API for frontend consumption  
+Easy for any system to integrate.
 
 ---
 
-## 🔧 Tech Stack
+# 📌 2. API Endpoints
 
-### Runtime & Async:
-- **Tokio** (async runtime)
-- **Axum** (modern Rust web framework)
-- **tower-http** (CORS)
+### **POST `/ingest`**
+Accepts a new behavioral event.
 
-### Serialization:
-- **serde**  
-- **serde_json**
+### **GET `/profiles`**
+Returns all known users + event count.
 
-### Data Handling:
-- **Arc + RwLock** to safely share state across threads
-- **Disk persistence** via `store.json`
+### **GET `/drift/:user_id`**
+Computes drift score and reasons.
 
----
+### **GET `/fingerprint/:user_id`**
+Returns last computed fingerprint and its stability.
 
-## 📂 Folder Structure
-
-
-
-rust-engine/
-│── src/
-│ └── main.rs
-│── store.json (auto generated)
-│── Cargo.toml
-
+### **GET `/timeline/:user_id`**
+Returns the user’s full event history sorted chronologically.
 
 ---
 
-## 🚀 How It Works (Step-by-Step)
+# 📌 3. Event Structure
 
-1. On startup:
-   - server loads existing `store.json`  
-   - initializes `Arc<RwLock<HashMap>>` state  
-   - configures CORS  
-   - starts listening on **localhost:8080**
+```json
+{
+  "user_id": "alice",
+  "kind": "login",
+  "meta": {
+    "browser": "chrome",
+    "os": "windows",
+    "dev_type": "laptop",
+    "ip": "1.2.3.4"
+  }
+}
+```
 
-2. When `/ingest` is called:
-   - timestamp is added
-   - event inserted under user key
-   - store is persisted to disk
-   - returns `{ ok: true, stored: true }`
-
-3. When `/profiles` is called:
-   - backend counts number of events per user
-   - returns them to dashboard
-
-4. When frontend requests `/user/{id}` (future):
-   - backend will supply additional data:
-     - fingerprint  
-     - drift score  
-     - timeline  
+The server automatically adds a timestamp if not provided.
 
 ---
 
-## 🧪 Testing the Backend (manual)
+# 📌 4. How It Works Internally
 
-### Ingest an event:
+### 🧠 1. Data is stored in a global in-memory HashMap  
+```
+HashMap<String, Vec<Event>>
+```
 
+### 💾 2. Data is saved to disk on every ingest  
+`store.json` contains all events.
 
-curl -X POST http://localhost:8080/ingest
- ^
--H "Content-Type: application/json" ^
--d "{"user_id":"alice","kind":"login","meta":{"ip":"1.2.3.4","browser":"chrome","os":"windows","dev_type":"laptop"}}"
+### 🧮 3. Drift Score Logic  
+Drift is based on:
 
+- IP changes  
+- Browser changes  
+- OS changes  
+- Device type changes  
+- Abrupt jumps in sequence  
 
-### Get profiles:
+Each contributes to a weighted drift score:
+- Multiple IPs → +20  
+- Multiple OS → +5  
+- Multiple browsers → +5  
+- Multiple device types → +5  
+- Abrupt device switch → +10  
 
+### 🔐 4. Fingerprint Stability  
+Uses token intersection logic:
+- High overlap = stable behavior  
+- Large changes = unstable behavior  
 
-curl http://localhost:8080/profiles
-
-
-### Health check:
-
-
-curl http://localhost:8080/health
-
-
----
-
-## 🛠 Usage for Developers
-
-Developers can:
-- send behavioral events to `/ingest`
-- build any ML / anomaly detection layer on top of event history
-- extend fingerprinting logic
-- plug into SIEM, IAM, or SSO systems
-- integrate into dashboards (Next.js)
-
----
-
-## 📌 Future Goals
-
-- Add risk scoring model
-- Add time-series drift tracking
-- Add fingerprint evolution analysis
-- Add real-time streaming (NATS or Kafka)
-- Add authentication
-- Build proper SDK for sending events
-- Add device reputation scoring
-- Add anomaly heatmaps
-- Add GraphView of identity drift
-- Add MinIO or S3 storage for event logs
+### 📜 5. Timeline  
+Sorted by timestamps so analysts can visually understand sequence.
 
 ---
 
-## ✔️ Summary
+# 📌 5. Technology Used
 
-This backend is a clean, simple Axum-based Rust engine designed for behavioral identity tracking.  
-It is modular, extendable, and built to serve as a real security-feature POC that can be expanded into enterprise-grade identity drift analytics.
+| Component | Technology |
+|----------|------------|
+| Runtime | Rust (Tokio async runtime) |
+| Framework | Axum 0.7 |
+| Storage | JSON flat-file persistence |
+| CORS | tower-http |
+| Hashing | Blake3 |
+| Data | RwLock for concurrency |
+| Timestamping | Chrono |
+
+---
+
+# 📌 6. How to Run
+
+### 1️⃣ Install Rust:
+```
+rustup update
+```
+
+### 2️⃣ Build:
+```
+cargo build
+```
+
+### 3️⃣ Run:
+```
+cargo run
+```
+
+Server starts at:
+
+```
+http://localhost:8080
+```
+
+---
+
+# 📌 7. Ingest Test
+
+```
+curl -X POST http://localhost:8080/ingest \
+  -H "Content-Type: application/json" \
+  -d @event.json
+```
+
+---
+
+# 📌 8. Future Goals
+
+### 🚀 1. Production database  
+PostgreSQL or ClickHouse.
+
+### 🚀 2. Distributed event stream  
+Kafka / NATS.
+
+### 🚀 3. ML-based drift scoring  
+Use anomaly detection models.
+
+### 🚀 4. Device fingerprint normalization  
+More advanced tokenization.
+
+### 🚀 5. Real-time processing  
+WebSockets.
+
+---
+
+# 📌 9. What This Engine Enables
+
+This backend can power:
+
+- SOC dashboards  
+- Fraud detection  
+- Identity risk scoring  
+- Login anomaly alerts  
+- Zero-trust verification  
+
+This engine is designed to be extendable and secure, with clean Rust code and reliable APIs.
+
+---
+
+# 🎉 Final Notes
+
+This engine is stable, tested, and ready for further expansion.  
+Perfect foundation for security, identity, and behavioral analytics systems.
